@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  body { margin:0; padding:16px; background:#fff; color:#111;
+         font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .bar { max-width:900px; margin:0 auto 18px; }
+  .bar h1 { font-size:1.4rem; margin:0 0 6px; }
+  .bar p { margin:6px 0; color:#444; }
+  .bar code { background:#f1f3f5; padding:1px 5px; border-radius:4px; word-break:break-all; }
+  .controls { display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-top:10px; }
+  .controls button { background:#1f3966; color:#fff; border:0; border-radius:6px; padding:9px 16px; font:inherit; cursor:pointer; }
+  .warn { background:#fbe9e4; color:#8a2f1b; padding:10px 12px; border-radius:6px; }
+  .sheet { --w:60mm; display:grid; grid-template-columns:repeat(auto-fill, var(--w)); justify-content:center;
+           gap:5mm; max-width:900px; margin:0 auto; }
+  .st { border:1px dashed #9aa; border-radius:3mm; padding:4mm 3mm; text-align:center;
+        break-inside:avoid; page-break-inside:avoid; }
+  .st .lab { font-size:7.5pt; color:#555; text-transform:uppercase; letter-spacing:.04em; }
+  .st .n { font-weight:700; font-size:12pt; margin:1mm 0 2mm; line-height:1.15; }
+  .st .q { width:78%; margin:0 auto; }
+  .st .q img, .st .q canvas { width:100% !important; height:auto !important; }
+  .st .h { font-size:8.5pt; margin-top:2mm; }
+  .st .l { font-size:6pt; color:#666; word-break:break-all; margin-top:1mm; }
+  .nolink .st .l { display:none; }
+  @media print {
+    .bar { display:none; }
+    body { padding:0; }
+    .sheet { max-width:none; gap:3mm; }
+    @page { size:A4; margin:10mm; }
+  }
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>QR stickers</h1>
+  <p>One sticker per active instrument. Print on A4 or sticker paper, cut along the dashed lines and attach each sticker to its instrument.</p>
+  <p>Codes point to: <code id="base"></code></p>
+  <div id="warn"></div>
+  <div class="controls">
+    <label>Sticker width
+      <select id="w">
+        <option value="45mm">45 mm</option>
+        <option value="60mm" selected>60 mm</option>
+        <option value="85mm">85 mm</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="showlink" checked> Print link under the code</label>
+    <button onclick="window.print()">Print</button>
+  </div>
+</div>
+<div class="sheet" id="sheet"></div>
+
+<script>
+const DATA = <?!= data ?>;
+const sheet = document.getElementById('sheet');
+const base = DATA.baseUrl || '';
+document.getElementById('base').textContent = base || '(not deployed yet)';
+if (!base) {
+  document.getElementById('warn').innerHTML =
+    '<p class="warn">Open this page through the deployed web app URL (…/exec?page=qr), otherwise the codes have no address.</p>';
+}
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c])); }
+
+DATA.instruments.forEach(i => {
+  const url = base + '?instrument=' + encodeURIComponent(i.id);
+  const el = document.createElement('div');
+  el.className = 'st';
+  el.innerHTML = `<div class="lab">${esc(DATA.labName)}</div>
+    <div class="n">${esc(i.name)}</div>
+    ${i.group ? `<div class="lab" style="margin:-1mm 0 2mm">${esc(i.group)}</div>` : ''}
+    <div class="q"></div>
+    <div class="h">Scan to book · no login needed</div>
+    <div class="l">${esc(url)}</div>`;
+  sheet.appendChild(el);
+  new QRCode(el.querySelector('.q'), { text: url, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M });
+});
+
+document.getElementById('w').onchange = e => sheet.style.setProperty('--w', e.target.value);
+document.getElementById('showlink').onchange = e => document.body.classList.toggle('nolink', !e.target.checked);
+</script>
+</body>
+</html>

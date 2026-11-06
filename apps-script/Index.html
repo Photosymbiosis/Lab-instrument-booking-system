@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  :root {
+    --bg:#f4f7fb; --card:#ffffff; --text:#14233d; --muted:#5d6b80; --line:#dde5ef;
+    --accent:#1f3966; --accent-ink:#ffffff; --brand:#1f3966; --brand-ink:#ffffff; --brand-light:#6ba7d9;
+    --busy:#b4472f; --busy-bg:#fbe9e4; --free:#2c7a46; --free-bg:#e5f3ea;
+    --blk:#dcebf8; --blk-line:#6ba7d9; --sel:rgba(107,167,217,.22);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0e1522; --card:#162133; --text:#e6edf6; --muted:#9aa8bb; --line:#26344a;
+      --accent:#7db4e2; --accent-ink:#0e1522; --brand:#1f3966; --brand-ink:#ffffff; --brand-light:#7db4e2;
+      --busy:#f08a70; --busy-bg:#3a221c; --free:#7fcf98; --free-bg:#1a2f21;
+      --blk:#1d3354; --blk-line:#7db4e2; --sel:rgba(125,180,226,.24);
+    }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  header { background:#ffffff; border-bottom:4px solid var(--brand-light); padding:10px 16px; }
+  header button { display:flex; align-items:center; gap:14px; background:none; border:0; padding:0; font:inherit;
+                  cursor:pointer; text-align:left; }
+  header img { height:52px; width:auto; display:block; }
+  header .ttl { display:flex; flex-direction:column; line-height:1.2; border-left:2px solid #dde5ef; padding-left:14px; }
+  header .ttl b { color:#1f3966; font-size:1.05rem; }
+  header .ttl span { color:#5d6b80; font-size:.85rem; }
+  header .ttl.nologo { border-left:0; padding-left:0; }
+  header .ttl.nologo b { font-size:1.2rem; }
+  @media (max-width:420px) { header img { height:42px; } header .ttl span { display:none; } }
+  main { max-width:720px; margin:0 auto; padding:16px 16px 48px; }
+  main.wide { max-width:1680px; padding-left:24px; padding-right:24px; }
+  h1 { font-size:1.45rem; margin:.3em 0 .25em; line-height:1.2; }
+  h2 { font-size:1rem; margin:1.4em 0 .5em; }
+  .panel h2 { margin-top:0; }
+  .muted { color:var(--muted); }
+  .small { font-size:.875rem; }
+  .loading { padding:48px 0; text-align:center; color:var(--muted); }
+  .back { background:none; border:0; padding:4px 0; font:inherit; color:var(--accent); cursor:pointer; }
+
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+  .card { display:flex; flex-direction:column; gap:6px; text-align:left; background:var(--card); color:inherit;
+          border:1px solid var(--line); border-radius:10px; padding:12px; font:inherit; cursor:pointer; }
+  .card:hover, .card:focus-visible { border-color:var(--accent); outline:none; }
+  .card .name { font-weight:600; }
+  .card { overflow:hidden; }
+  .card .thumb { margin:-12px -12px 4px; height:120px; background:var(--bg) center/cover no-repeat; border-bottom:1px solid var(--line); }
+  .grp { font-size:.78rem; color:var(--muted); }
+  .filter { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 4px; }
+  .chip { background:var(--card); border:1px solid var(--line); color:var(--text); border-radius:999px;
+          padding:5px 12px; font:inherit; font-size:.85rem; cursor:pointer; }
+  .flabel { font-size:.8rem; color:var(--muted); align-self:center; min-width:84px; }
+  .titlebar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+  .statsbtn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; font:inherit;
+              font-size:.92rem; font-weight:600; cursor:pointer; background:var(--card); color:var(--accent);
+              border:1px solid var(--accent); }
+  .statsbtn:hover { background:var(--sel); }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin:14px 0; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .tile .v { font-size:1.7rem; font-weight:700; line-height:1.1; color:var(--text); font-variant-numeric:tabular-nums; }
+  .tile .k { font-size:.82rem; color:var(--muted); margin-top:4px; }
+  .rank { width:100%; border-collapse:collapse; font-size:.9rem; }
+  .rank th { text-align:left; font-weight:600; font-size:.78rem; color:var(--muted); padding:6px 8px;
+             border-bottom:1px solid var(--line); }
+  .rank th.num, .rank td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .rank td { padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  .rank tr:last-child td { border-bottom:0; }
+  .rank tr:hover td { background:var(--bg); }
+  .rank .pos { color:var(--muted); width:28px; }
+  .rank .sub { display:block; font-size:.76rem; color:var(--muted); }
+  .barcell { width:34%; min-width:90px; }
+  .bar { height:10px; border-radius:0 4px 4px 0; background:var(--brand-light); min-width:2px; }
+  .bar.zero { background:transparent; }
+  @media (max-width:540px) { .barcell { display:none; } .rank td, .rank th { padding:7px 5px; } }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .seg button { background:var(--card); border:0; padding:6px 12px; font:inherit; font-size:.85rem; color:var(--text); cursor:pointer; }
+  .seg button + button { border-left:1px solid var(--line); }
+  .seg button.on { background:var(--accent); color:var(--accent-ink); }
+  .panelhead { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; }
+  .panelhead h2 { margin:0; }
+  .chip.on { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .photo { display:block; width:100%; max-height:280px; object-fit:cover; border-radius:12px;
+           border:1px solid var(--line); margin:10px 0 4px; background:var(--card); }
+  .status { font-size:.78rem; border-radius:6px; padding:2px 7px; align-self:flex-start; }
+  .status.free { background:var(--free-bg); color:var(--free); }
+  .status.busy { background:var(--busy-bg); color:var(--busy); }
+
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin:14px 0; }
+  .daynav { display:flex; gap:6px; align-items:center; }
+  .daynav input { flex:1; min-width:0; }
+  .navbtn { background:var(--bg); border:1px solid var(--line); color:var(--text); border-radius:8px;
+            padding:8px 12px; font:inherit; cursor:pointer; }
+
+  .tl-wrap { height:460px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; background:var(--card); }
+  .tl-head, .tl-body { display:grid; grid-template-columns:44px repeat(var(--n), minmax(0,1fr)); }
+  .tl-head { position:sticky; top:0; z-index:3; background:var(--card); border-bottom:1px solid var(--line); }
+  .dh { padding:8px 4px; text-align:center; font-size:.82rem; font-weight:600; border-left:1px solid var(--line);
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dh.today { color:var(--accent); box-shadow:inset 0 -3px 0 var(--brand-light); }
+  .tl-body { padding:10px 0; }
+  .axis, .col { position:relative; }
+  .axis span { position:absolute; right:6px; transform:translateY(-50%); font-size:.7rem; color:var(--muted); }
+  .col { border-left:1px solid var(--line); cursor:pointer; }
+  .col.past { background:repeating-linear-gradient(135deg, transparent 0 6px, var(--line) 6px 7px); cursor:default; }
+  .daily .col { cursor:pointer; }
+  .hr { position:absolute; left:0; right:0; border-top:1px solid var(--line); pointer-events:none; }
+  .blk { position:absolute; left:3px; right:3px; background:var(--blk); border-left:3px solid var(--blk-line);
+         border-radius:5px; padding:2px 5px; font-size:.74rem; overflow:hidden; cursor:default; line-height:1.25; z-index:1; }
+  .blk span { color:var(--muted); display:block; }
+  .sel { position:absolute; left:3px; right:3px; background:var(--sel); border:1.5px dashed var(--accent);
+         border-radius:5px; pointer-events:none; z-index:2; }
+  .now { position:absolute; left:0; right:0; border-top:2px solid var(--busy); pointer-events:none; z-index:2; }
+
+  label { display:block; margin:10px 0 0; font-size:.86rem; color:var(--muted); }
+  input, select { font:inherit; padding:9px 10px; border:1px solid var(--line); border-radius:8px;
+                  background:var(--bg); color:var(--text); width:100%; }
+  label input { margin-top:4px; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .row.one { grid-template-columns:1fr; }
+  .chk { display:flex; gap:8px; align-items:center; margin-top:12px; }
+  .chk input { width:auto; margin:0; }
+  .primary { display:block; width:100%; margin-top:14px; background:var(--accent); color:var(--accent-ink);
+             border:0; border-radius:8px; padding:12px 16px; font:inherit; font-weight:650; cursor:pointer; }
+  .opt { font-weight:600; color:var(--accent); }
+  .hint { font-size:.8rem; color:var(--muted); margin-top:4px; }
+  .manual { display:inline-flex; align-items:center; gap:6px; margin-top:10px; padding:8px 14px; border-radius:8px;
+            border:1px solid var(--accent); color:var(--accent); text-decoration:none; font-weight:600; font-size:.92rem; }
+  .manual:hover { background:var(--sel); }
+  .actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .actions .manual { margin-top:10px; }
+  .manual.mail { border-color:var(--line); color:var(--text); font-weight:500; word-break:break-all; }
+  .primary.danger { background:var(--busy); color:#fff; }
+  .primary:disabled { opacity:.6; cursor:default; }
+  .msg { margin-top:12px; padding:10px 12px; border-radius:8px; font-size:.9rem; }
+  .msg.err { background:var(--busy-bg); color:var(--busy); }
+  .msg.ok  { background:var(--free-bg); color:var(--free); }
+  .msg a { color:inherit; font-weight:600; }
+
+  .up { list-style:none; padding:0; margin:0; }
+  .up li { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-top:1px solid var(--line); font-size:.9rem; }
+  .up li:first-child { border-top:0; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<header><button id="brand" aria-label="All instruments">
+  <? if (logoUrl) { ?><img alt="Logo" src="<?= logoUrl ?>"><? } ?>
+  <span class="ttl<? if (!logoUrl) { ?> nologo<? } ?>"><b>Instrument booking</b><span><?= labName ?></span></span>
+</button></header>
+<main id="app"><div class="loading">Loading…</div></main>
+
+<script>
+const P = <?!= params ?>;
+const app = document.getElementById('app');
+const PX = 40;          // pixels per hour on the timeline
+let view = null;        // data of the instrument currently shown
+let flash = null;       // one-off message shown on the instrument page
+
+// ---------- utilities ----------
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+function call(fn, ...args) {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(e => reject(e && e.message ? e : new Error(String(e))))[fn](...args);
+  });
+}
+function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function lsSet(k, v) { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} }
+function addDays(str, n) { const d = new Date(str + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function hhmm(m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+function toMin(t) { const [h, m] = String(t).split(':').map(Number); return h * 60 + m; }
+function hoursText(h) { return h >= 24 && h % 24 === 0 ? (h / 24) + (h === 24 ? ' day' : ' days') : h + ' h'; }
+const STEP = 15;       // start/end times in 15-minute steps (must match TIME_STEP_MIN in Code.gs)
+function minText(m) { return m % 60 === 0 ? hoursText(m / 60) : m > 60 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : m + ' min'; }
+function $(id) { return document.getElementById(id); }
+
+function showLoading() { app.innerHTML = '<div class="loading">Loading…</div>'; }
+function setWide(on) { app.classList.toggle('wide', !!on); }
+function showError(e) {
+  app.innerHTML = `<div class="msg err">${esc(e && e.message || e)}</div>
+    <p><button class="back" id="home">← All instruments</button></p>`;
+  bindHome();
+}
+function bindHome() { const b = $('home'); if (b) b.onclick = () => navigate({}); }
+
+function navigate(params) {
+  try { google.script.history.push(null, params); } catch (e) {}
+  route(params);
+  window.scrollTo(0, 0);
+}
+function route(p) {
+  p = p || {};
+  flash = null;
+  setWide(!(p.page === 'manage' && p.id) && !p.instrument);
+  if (p.page === 'manage' && p.id) return showManage(p.id, p.token || '');
+  if (p.page === 'stats') { setWide(false); return showStats(p.days || ''); }
+  if (p.instrument) return showInstrument(p.instrument, '');
+  return showHome();
+}
+
+// ---------- home: all instruments ----------
+async function showHome() {
+  setWide(true);
+  showLoading();
+  let d;
+  try { d = await call('apiGetInstruments'); } catch (e) { return showError(e); }
+  const groups = [];
+  const byCat = {};
+  d.instruments.forEach(i => {
+    if (!byCat[i.category]) { byCat[i.category] = []; groups.push(i.category); }
+    byCat[i.category].push(i);
+  });
+  const owners = [...new Set(d.instruments.flatMap(i => i.groups || []))].sort((a, b) => a.localeCompare(b));
+  const places = [...new Set(d.instruments.map(i => i.location).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const chipRow = (kind, label, allText, values) => values.length > 1
+    ? `<div class="filter"><span class="flabel">${label}</span>` +
+      ['', ...values].map(v => `<button class="chip" data-kind="${kind}" data-v="${esc(v)}">${esc(v || allText)}</button>`).join('') +
+      `</div>`
+    : '';
+  const filter = chipRow('g', 'Group', 'All groups', owners) + chipRow('l', '📍 Location', 'All locations', places);
+  app.innerHTML = `<div class="titlebar"><h1>Book an instrument</h1>
+      <button class="statsbtn" id="statsbtn">📊 Statistics</button></div>
+    <p class="muted small">Choose an instrument to see its schedule and reserve a time. No account needed.</p>` + filter +
+    `<p class="muted hidden" id="nomatch">No instruments match these filters.</p>` +
+    groups.map(cat => `<section data-cat><h2>${esc(cat)}</h2><div class="cards">` + byCat[cat].map(i => `
+      <button class="card" data-id="${esc(i.id)}" data-g="${esc((i.groups || []).join('\n'))}" data-l="${esc(i.location || '')}">
+        ${i.photo ? `<span class="thumb" style="background-image:url('${esc(i.photo)}')"></span>` : ''}
+        <span class="name">${esc(i.name)}</span>
+        ${i.group || i.location ? `<span class="grp">${[esc(i.group), i.location ? '📍 ' + esc(i.location) : ''].filter(Boolean).join(' · ')}</span>` : ''}
+        <span class="status ${i.busy ? 'busy' : 'free'}">${i.busy
+          ? 'In use until ' + esc(i.until) + (i.by ? ' · ' + esc(i.by) : '')
+          : 'Free now' + (i.next ? ' · next ' + esc(i.next) : '')}</span>
+      </button>`).join('') + '</div></section>').join('');
+  app.querySelectorAll('.card').forEach(b => b.onclick = () => navigate({ instrument: b.dataset.id }));
+  $('statsbtn').onclick = () => navigate({ page: 'stats' });
+  const sel = { g: lsGet('lb_group'), l: lsGet('lb_loc') };
+  if (owners.indexOf(sel.g) < 0) sel.g = '';
+  if (places.indexOf(sel.l) < 0) sel.l = '';
+  const applyFilter = () => {
+    lsSet('lb_group', sel.g); lsSet('lb_loc', sel.l);
+    app.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.v === sel[c.dataset.kind]));
+    app.querySelectorAll('.card').forEach(c => c.classList.toggle('hidden',
+      (!!sel.g && c.dataset.g.split('\n').indexOf(sel.g) < 0) || (!!sel.l && c.dataset.l !== sel.l)));
+    let any = false;
+    app.querySelectorAll('section[data-cat]').forEach(sec => {
+      const vis = !!sec.querySelector('.card:not(.hidden)'); any = any || vis;
+      sec.classList.toggle('hidden', !vis);
+    });
+    $('nomatch').classList.toggle('hidden', any);
+  };
+  app.querySelectorAll('.chip').forEach(c => c.onclick = () => { sel[c.dataset.kind] = c.dataset.v; applyFilter(); });
+  applyFilter();
+}
+
+// ---------- instrument: schedule + booking form ----------
+async function showInstrument(id, date) {
+  setWide(false);
+  flash = null;
+  showLoading();
+  try { view = await call('apiGetDay', id, date || ''); } catch (e) { return showError(e); }
+  renderInstrument();
+}
+
+function renderInstrument() {
+  const d = view, i = d.instrument, slot = i.slotMinutes, daily = i.daily;
+  const contactMail = (String(i.contact || '').match(/[^\s<>()"',;:]+@[^\s<>()"',;:]+\.[a-z]{2,}/i) || [''])[0];
+  const meta = [i.group && (i.group.indexOf(',') >= 0 ? 'Groups: ' : 'Group: ') + i.group, i.location && '📍 ' + i.location,
+    !contactMail && i.contact && 'Contact: ' + i.contact].filter(Boolean).join(' · ');
+  const actions = [
+    i.manual ? `<a class="manual" href="${esc(i.manual)}" target="_blank" rel="noopener">📖 Read the manual</a>` : '',
+    contactMail ? `<a class="manual mail" href="mailto:${esc(contactMail)}?subject=${encodeURIComponent(i.name)}" title="Email the instrument responsible">✉️ <b>Questions?</b>&nbsp;${esc(contactMail)}</a>` : '',
+  ].join('');
+  const rules = `${daily ? 'Booked in whole days' : 'Suggested slot ' + minText(slot)} · max ${hoursText(i.maxHours)} · up to ${i.maxDaysAhead} days ahead`;
+
+  const n = d.days.length, H = 24 * PX;
+  let lines = '';
+  for (let h = 1; h < 24; h++) lines += `<div class="hr" style="top:${h * PX}px"></div>`;
+  let tl = `<div class="tl-wrap${daily ? ' daily' : ''}" id="tlwrap" style="--n:${n}">
+    <div class="tl-head"><div></div>` +
+    d.days.map(day => `<div class="dh${day.isToday ? ' today' : ''}">${esc(day.isToday ? 'Today' : day.label)}</div>`).join('') +
+    `</div><div class="tl-body"><div class="axis" style="height:${H}px">`;
+  for (let h = 1; h < 24; h++) tl += `<span style="top:${h * PX}px">${hhmm(h * 60)}</span>`;
+  tl += '</div>';
+  d.days.forEach((day, k) => {
+    tl += `<div class="col${day.past ? ' past' : ''}" data-k="${k}" style="height:${H}px">${lines}`;
+    day.blocks.forEach(b => {
+      const top = b.startMin / 60 * PX, h = Math.max((b.endMin - b.startMin) / 60 * PX, 16);
+      tl += `<div class="blk" style="top:${top}px;height:${h}px" title="${esc(b.label + ' · ' + b.time)}"><b>${esc(b.label)}</b><span>${esc(b.time)}</span></div>`;
+    });
+    tl += `<div class="sel hidden"></div>`;
+    if (day.nowMin != null) tl += `<div class="now" style="top:${day.nowMin / 60 * PX}px"></div>`;
+    tl += '</div>';
+  });
+  tl += '</div></div>';
+
+  const domainsHint = d.domains.length ? 'Use your ' + d.domains.map(x => '@' + x).join(' / ') + ' address' : '';
+  const upcoming = d.upcoming.length
+    ? d.upcoming.map(u => `<li><span>${esc(u.range)}</span><span class="muted">${esc(u.who)}</span></li>`).join('')
+    : '<li class="muted">No upcoming bookings.</li>';
+
+  app.innerHTML = `
+    <button class="back" id="home">← All instruments</button>
+    <h1>${esc(i.name)}</h1>
+    ${meta ? `<div class="muted small">${esc(meta)}</div>` : ''}
+    ${actions ? `<div class="actions">${actions}</div>` : ''}
+    ${i.photo ? `<img class="photo" src="${esc(i.photo)}" alt="Photo of ${esc(i.name)}" loading="lazy" onerror="this.remove()">` : ''}
+    ${i.notes ? `<div class="small" style="margin-top:4px">${esc(i.notes)}</div>` : ''}
+    <div class="muted small" style="margin-top:4px">${esc(rules)}</div>
+    ${flash ? `<div class="msg ${flash.type}">${flash.html}</div>` : ''}
+
+    <div class="panel">
+      <div class="daynav">
+        <button class="navbtn" id="prev" aria-label="Previous ${n} days">‹</button>
+        <input type="date" id="day" value="${esc(d.date)}" aria-label="First day shown">
+        <button class="navbtn" id="next" aria-label="Next ${n} days">›</button>
+        <button class="navbtn" id="today">Today</button>
+      </div>
+      <div class="small muted" style="margin:8px 0">${esc(d.rangeLabel)} · ${daily ? 'tap a day to select it' : 'tap a free time to start your booking there'}</div>
+      ${tl}
+    </div>
+
+    <form class="panel" id="bf" novalidate>
+      <h2>Reserve ${esc(i.name)}</h2>
+      <div class="row${daily ? ' one' : ''}">
+        <label>${daily ? 'First day' : 'Start date'}<input type="date" id="sd" required></label>
+        <label class="${daily ? 'hidden' : ''}">Start time<input type="time" id="st" step="${STEP * 60}"></label>
+      </div>
+      <div class="row${daily ? ' one' : ''}">
+        <label>${daily ? 'Last day' : 'End date'}<input type="date" id="ed" required></label>
+        <label class="${daily ? 'hidden' : ''}">End time<input type="time" id="et" step="${STEP * 60}"></label>
+      </div>
+      <label>Name<input id="nm" autocomplete="name" maxlength="80" required></label>
+      <label>Email ${d.domains.length
+        ? `<span class="small">(${esc(domainsHint)})</span>`
+        : '<span class="small">(optional)</span>'}<input type="email" id="em" autocomplete="email" maxlength="120"${d.domains.length ? ' required' : ''}></label>
+      ${d.domains.length ? '' : '<div class="hint">Leave empty to book without email. With an email you get a confirmation and a link to cancel later.</div>'}
+      <label>Purpose / project <span class="small">(optional)</span><input id="pu" maxlength="200"></label>
+      ${d.pinRequired ? '<label>Lab PIN<input id="pin" type="password" inputmode="numeric" autocomplete="off"></label>' : ''}
+      <label class="chk"><input type="checkbox" id="rem" ${lsGet('lb_name') || !lsGet('lb_seen') ? 'checked' : ''}> Remember name and email on this device</label>
+      <button type="submit" class="primary" id="go">Book</button>
+      <div id="msg"></div>
+      ${d.privacyNote ? `<p class="muted small" style="margin:12px 0 0">${esc(d.privacyNote)}</p>` : ''}
+    </form>
+
+    <div class="panel">
+      <h2>Upcoming bookings</h2>
+      <ul class="up">${upcoming}</ul>
+    </div>`;
+
+  bindHome();
+  $('prev').onclick = () => showInstrument(i.id, addDays(d.date, -n));
+  $('next').onclick = () => showInstrument(i.id, addDays(d.date, n));
+  $('today').onclick = () => showInstrument(i.id, '');
+  $('day').onchange = e => { if (e.target.value) showInstrument(i.id, e.target.value); };
+
+  $('nm').value = lsGet('lb_name');
+  $('em').value = lsGet('lb_email');
+
+  // default selection: next free slot today (if shown), otherwise 09:00 on the first shown day
+  const todayCol = d.days.find(x => x.isToday);
+  const firstDay = todayCol || d.days.find(x => !x.past) || d.days[0];
+  if (daily) {
+    $('sd').value = firstDay.date; $('ed').value = firstDay.date;
+  } else {
+    const start = todayCol ? Math.min(1440 - STEP, Math.ceil(todayCol.nowMin / STEP) * STEP) : 540;
+    setRange(firstDay.date, start, defaultLen(firstDay, start));
+  }
+  ['sd', 'st', 'ed', 'et'].forEach(k => $(k).addEventListener('input', updateSel));
+  // moving the start moves the end along, keeping the booking length
+  $('sd').addEventListener('change', onStartChange);
+  $('st').addEventListener('change', onStartChange);
+  rememberStart();
+  updateSel();
+
+  // tap on timeline to choose start
+  app.querySelectorAll('.col').forEach(col => col.onclick = ev => {
+    const day = d.days[Number(col.dataset.k)];
+    if (day.past || ev.target.closest('.blk')) return;
+    if (daily) {
+      $('sd').value = day.date;
+      onStartChange();
+    } else {
+      const y = ev.clientY - col.getBoundingClientRect().top;
+      const start = Math.max(0, Math.min(1440 - STEP, Math.floor(y / PX * 60 / STEP) * STEP));
+      setRange(day.date, start, defaultLen(day, start));
+    }
+    $('bf').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  const wrap = $('tlwrap');
+  wrap.scrollTop = Math.max(0, ((todayCol ? todayCol.nowMin : 480) / 60 - 1) * PX);
+
+  $('bf').onsubmit = submitBooking;
+}
+
+/** Default booking length: the suggested slot length, shortened to fit before the next booking. */
+function defaultLen(day, start) {
+  const i = view.instrument;
+  let len = Math.min(i.slotMinutes, i.maxHours * 60);
+  const next = day.blocks.filter(b => b.startMin > start).map(b => b.startMin).sort((a, b) => a - b)[0];
+  if (next != null && start + len > next) len = Math.floor((next - start) / STEP) * STEP;
+  return Math.max(STEP, len);
+}
+
+function setRange(date, sMin, len) {
+  let sd = date;
+  while (sMin >= 1440) { sMin -= 1440; sd = addDays(sd, 1); }
+  let eMin = sMin + len, ed = sd;
+  while (eMin >= 1440) { eMin -= 1440; ed = addDays(ed, 1); }
+  $('sd').value = sd; $('st').value = hhmm(sMin);
+  $('ed').value = ed; $('et').value = hhmm(eMin);
+  rememberStart();
+  updateSel();
+}
+
+// ---- keep end in step with start ----
+let prevStart = null;   // start (absolute minutes) before the user's last change
+function absMin(date, t) { return Date.parse(date + 'T00:00:00Z') / 60000 + (t ? toMin(t) : 0); }
+function fromAbs(m) { const iso = new Date(m * 60000).toISOString(); return [iso.slice(0, 10), iso.slice(11, 16)]; }
+function startAbs() {
+  const sd = $('sd').value, st = view.instrument.daily ? '00:00' : $('st').value;
+  return sd && st ? absMin(sd, st) : null;
+}
+function rememberStart() { prevStart = startAbs(); }
+function onStartChange() {
+  const daily = view.instrument.daily, newStart = startAbs();
+  if (newStart == null) return;
+  const ed = $('ed').value, et = daily ? '00:00' : $('et').value;
+  let len = prevStart != null && ed && et ? absMin(ed, et) - prevStart : null;
+  if (len == null || len < 0 || (!daily && len === 0)) len = daily ? 0 : view.instrument.slotMinutes;
+  const [nd, nt] = fromAbs(newStart + len);
+  $('ed').value = nd;
+  if (!daily) $('et').value = nt;
+  prevStart = newStart;
+  updateSel();
+}
+
+/** Draws the current form selection onto every shown day it overlaps. */
+function updateSel() {
+  if (!view || !$('sd')) return;
+  const daily = view.instrument.daily;
+  const sd = $('sd').value, ed = $('ed').value, st = $('st').value, et = $('et').value;
+  app.querySelectorAll('.col').forEach(col => {
+    const sel = col.querySelector('.sel'), day = view.days[Number(col.dataset.k)].date;
+    let s = null, e = null;
+    if (sd && ed && sd <= day && day <= ed) {
+      if (daily) { s = 0; e = 1440; }
+      else if (st && et) { s = sd === day ? toMin(st) : 0; e = ed === day ? toMin(et) : 1440; }
+    }
+    if (s == null || e <= s) { sel.classList.add('hidden'); return; }
+    sel.classList.remove('hidden');
+    sel.style.top = (s / 60 * PX) + 'px';
+    sel.style.height = ((e - s) / 60 * PX) + 'px';
+  });
+}
+
+async function submitBooking(ev) {
+  ev.preventDefault();
+  const i = view.instrument, msg = $('msg'), btn = $('go');
+  const sd = $('sd').value, ed = $('ed').value;
+  const st = $('st').value, et = $('et').value;
+  msg.className = ''; msg.textContent = '';
+  if (!sd || !ed || (!i.daily && (!st || !et))) {
+    msg.className = 'msg err'; msg.textContent = 'Please choose start and end.'; return;
+  }
+  const payload = {
+    instrumentId: i.id,
+    start: i.daily ? sd + 'T00:00' : sd + 'T' + st,
+    end: i.daily ? addDays(ed, 1) + 'T00:00' : ed + 'T' + et,
+    name: $('nm').value, email: $('em').value, purpose: $('pu').value,
+    pin: $('pin') ? $('pin').value : '',
+  };
+  btn.disabled = true; btn.textContent = 'Booking…';
+  try {
+    const r = await call('apiBook', payload);
+    lsSet('lb_seen', '1');
+    if ($('rem').checked) { lsSet('lb_name', payload.name.trim()); lsSet('lb_email', payload.email.trim()); }
+    else { lsSet('lb_name', ''); lsSet('lb_email', ''); }
+    const mail = r.mailed
+      ? `A confirmation with a link to change or cancel was sent to ${esc(r.email)}.`
+      : r.email
+        ? `The confirmation email could not be sent – keep this link to cancel: <a href="${esc(r.manageUrl)}">manage booking</a>.`
+        : `No email given – to cancel later, bookmark this link now: <a href="${esc(r.manageUrl)}">manage booking</a>.`;
+    const bookedDay = payload.start.slice(0, 10);
+    const inView = view.days.some(x => x.date === bookedDay);
+    await showInstrument(i.id, inView ? view.date : bookedDay);
+    flash = { type: 'ok', html: `<b>Booked:</b> ${esc(i.name)}, ${esc(r.range)}. ${mail}` };
+    renderInstrument();
+    window.scrollTo(0, 0);
+  } catch (e) {
+    msg.className = 'msg err'; msg.textContent = e.message || String(e);
+    btn.disabled = false; btn.textContent = 'Book';
+  }
+}
+
+// ---------- statistics ----------
+let statsSort = 'bookings';
+function fmtHours(h) {
+  if (h >= 48) return (Math.round(h / 24 * 10) / 10).toLocaleString('en-GB') + ' d';
+  return (Math.round(h * 10) / 10).toLocaleString('en-GB') + ' h';
+}
+async function showStats(days) {
+  setWide(false);
+  showLoading();
+  let d;
+  try { d = await call('apiGetStats', days || 30); } catch (e) { return showError(e); }
+  const periods = [[30, 'Last 30 days'], [90, 'Last 90 days'], [180, 'Last 180 days']];
+  const t = d.totals;
+  const tile = (v, k) => `<div class="tile"><div class="v">${esc(v)}</div><div class="k">${esc(k)}</div></div>`;
+  const scope = `Bookings starting in the ${periods.find(p => p[0] === d.days)[1].toLowerCase()}, including upcoming ones.`;
+
+  const userRows = d.users.map((u, k) => {
+    const max = d.users[0].bookings || 1;
+    return `<tr><td class="pos">${k + 1}</td>
+      <td>${esc(u.name)}<span class="sub">${u.instruments} instrument${u.instruments === 1 ? '' : 's'}</span></td>
+      <td class="barcell"><div class="bar" style="width:${u.bookings / max * 100}%" title="${esc(u.name)}: ${u.bookings} bookings"></div></td>
+      <td class="num"><b>${u.bookings}</b></td><td class="num">${fmtHours(u.hours)}</td></tr>`;
+  }).join('');
+  const usersPanel = !d.showNames
+    ? '<p class="muted small">User ranking is hidden because names are not shown publicly (SHOW_NAMES = FALSE in Settings).</p>'
+    : d.users.length
+      ? `<table class="rank"><thead><tr><th></th><th>User</th><th></th><th class="num">Bookings</th><th class="num">Time</th></tr></thead><tbody>${userRows}</tbody></table>`
+      : '<p class="muted small">No bookings in this period.</p>';
+
+  app.innerHTML = `
+    <button class="back" id="home">← All instruments</button>
+    <h1>Usage statistics</h1>
+    <div class="filter">${periods.map(([v, l]) => `<button class="chip${v === d.days ? ' on' : ''}" data-days="${v}">${l}</button>`).join('')}</div>
+    <p class="muted small" style="margin:6px 0 0">${scope}</p>
+    <div class="tiles">
+      ${tile(t.bookings.toLocaleString('en-GB'), 'Bookings')}
+      ${tile(fmtHours(t.hours), 'Total time booked')}
+      ${tile(t.users.toLocaleString('en-GB'), 'Active users (with email)')}
+      ${tile(t.instrumentsUsed + ' / ' + t.instruments, 'Instruments used')}
+    </div>
+    <div class="panel">
+      <div class="panelhead"><h2>Most used instruments</h2>
+        <div class="seg" role="group" aria-label="Sort by">
+          <button data-sort="bookings">Number of bookings</button><button data-sort="hours">Total time</button>
+        </div></div>
+      <div id="insttable"></div>
+      <p class="muted small" style="margin:10px 0 0">Whole-day instruments (e.g. incubators) count 24 h per booked day.</p>
+    </div>
+    <div class="panel">
+      <div class="panelhead"><h2>Most active users</h2><span class="muted small">by number of bookings</span></div>
+      ${usersPanel}
+      ${d.showNames ? `<p class="muted small" style="margin:10px 0 0">Only bookings made with an email address are ranked here, so name typos don't split one person into several${t.withoutEmail ? ` (${t.withoutEmail} booking${t.withoutEmail === 1 ? '' : 's'} without email not included)` : ''}.</p>` : ''}
+    </div>`;
+  bindHome();
+  app.querySelectorAll('[data-days]').forEach(b => b.onclick = () => {
+    const v = Number(b.dataset.days);
+    try { google.script.history.push(null, { page: 'stats', days: String(v) }); } catch (e) {}
+    showStats(v);
+  });
+
+  const renderInst = () => {
+    const key = statsSort;
+    app.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('on', b.dataset.sort === key));
+    const list = d.instruments.slice().sort((a, b) => b[key] - a[key] || b[key === 'hours' ? 'bookings' : 'hours'] - a[key === 'hours' ? 'bookings' : 'hours'] || a.name.localeCompare(b.name));
+    const max = Math.max(1, ...list.map(i => i[key]));
+    $('insttable').innerHTML = `<table class="rank"><thead><tr><th></th><th>Instrument</th><th></th>
+      <th class="num">Bookings</th><th class="num">Time</th></tr></thead><tbody>` +
+      list.map((i, k) => `<tr><td class="pos">${i[key] ? k + 1 : ''}</td>
+        <td>${esc(i.name)}<span class="sub">${esc([i.category, i.group].filter(Boolean).join(' · '))}</span></td>
+        <td class="barcell"><div class="bar${i[key] ? '' : ' zero'}" style="width:${i[key] / max * 100}%" title="${esc(i.name)}: ${i.bookings} bookings, ${fmtHours(i.hours)}"></div></td>
+        <td class="num">${key === 'bookings' ? '<b>' + i.bookings + '</b>' : i.bookings}</td>
+        <td class="num">${key === 'hours' ? '<b>' + fmtHours(i.hours) + '</b>' : fmtHours(i.hours)}</td></tr>`).join('') +
+      '</tbody></table>';
+  };
+  app.querySelectorAll('[data-sort]').forEach(b => b.onclick = () => { statsSort = b.dataset.sort; renderInst(); });
+  renderInst();
+}
+
+// ---------- manage: view / cancel a booking (link from email) ----------
+async function showManage(id, token, note) {
+  setWide(false);
+  showLoading();
+  let b;
+  try { b = await call('apiGetBooking', id, token); } catch (e) { return showError(e); }
+  const status = b.status === 'cancelled' ? 'Cancelled' : b.canCancel ? (b.ongoing ? 'In progress' : 'Confirmed') : 'Finished';
+  app.innerHTML = `
+    <button class="back" id="home">← All instruments</button>
+    <h1>Your booking</h1>
+    ${note ? `<div class="msg ok">${esc(note)}</div>` : ''}
+    <div class="panel">
+      <div class="name" style="font-weight:600">${esc(b.instrumentName)}</div>
+      <div>${esc(b.range)}</div>
+      <div class="muted small">${esc(b.name)}${b.purpose ? ' · ' + esc(b.purpose) : ''} · Ref. ${esc(b.id)}</div>
+      <div style="margin-top:8px"><span class="status ${b.status === 'cancelled' ? 'busy' : 'free'}">${status}</span></div>
+      ${b.canCancel ? `<button class="primary danger" id="cx">${b.ongoing ? 'I’m done – release the remaining time' : 'Cancel this booking'}</button>` : ''}
+      <div id="msg"></div>
+    </div>
+    <p><button class="back" id="inst">${esc(b.instrumentName)} schedule →</button></p>`;
+  bindHome();
+  $('inst').onclick = () => navigate({ instrument: b.instrumentId });
+  const cx = $('cx');
+  if (!cx) return;
+  let armed = false;
+  cx.onclick = async () => {
+    if (!armed) { armed = true; cx.textContent = 'Tap again to confirm'; return; }
+    cx.disabled = true; cx.textContent = 'Working…';
+    try {
+      const r = await call('apiCancel', id, token);
+      showManage(id, token, r.action === 'shortened'
+        ? 'Remaining time released. Your booking now runs ' + r.range + '.'
+        : 'Booking cancelled.');
+    } catch (e) {
+      const m = $('msg'); m.className = 'msg err'; m.textContent = e.message || String(e);
+      cx.disabled = false; armed = false;
+      cx.textContent = b.ongoing ? 'I’m done – release the remaining time' : 'Cancel this booking';
+    }
+  };
+}
+
+// ---------- start ----------
+$('brand').onclick = () => navigate({});
+try { google.script.history.setChangeHandler(e => route((e && e.location && e.location.parameter) || {})); } catch (e) {}
+route(P);
+</script>
+</body>
+</html>

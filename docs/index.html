@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<!--
+  Optional redirect page for a short address such as https://book.your-institute.org
+  1. Replace YOUR-DEPLOYMENT-ID below with the ID from your web app URL
+     (https://script.google.com/macros/s/<THIS PART>/exec).
+  2. Publish this file as index.html on any web space you control (e.g. GitHub Pages).
+  3. Enter the short address as PUBLIC_URL in the Settings tab of the booking sheet.
+  With GitHub Pages: Settings → Pages → Deploy from branch "main", folder "/docs".
+  "+ location.search" passes ?instrument=... through, so QR codes keep working.
+-->
+<meta charset="utf-8">
+<title>Instrument booking</title>
+<link rel="icon" href="favicon.png">
+<script>
+  location.replace('https://script.google.com/macros/s/YOUR-DEPLOYMENT-ID/exec' + location.search);
+</script>
+<noscript><a href="https://script.google.com/macros/s/YOUR-DEPLOYMENT-ID/exec">Open the booking page</a></noscript>
