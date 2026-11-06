@@ -1,4 +1,4 @@
-# QR-code instrument booking for Google Workspace
+# Instrument booking tool for Google Workspace
 
 A lightweight booking system for shared lab instruments. It runs entirely inside Google Workspace (a Google Sheet plus an Apps Script web app), so no server, database or paid software is needed.
 
